@@ -114,8 +114,8 @@ void structDFA(char *s){//用一个邻接矩阵描述
         }
         if(s[i]=='&'){
             //copy_int_line(F[buttom_state[0]],F[top_state[1]]);
-            F[top_state[1]][char_set_len]=buttom_state[1];
-            top_state[1]=buttom_state[1];//buttom的入口状态就被舍弃了，状态会多但是不影响
+            F[top_state[1]][char_set_len+2]=buttom_state[0];
+            top_state[1]=buttom_state[1];
             buttom_state[0]=-1;
         }
         if(s[i]=='|'){
@@ -155,11 +155,30 @@ void structDFA(char *s){//用一个邻接矩阵描述
     printf("start state:%d\n",start_state);
     for(int i=0;i<state;i++){
         printf("\n state%d : ",i);
-        for(int j=0;j<char_set_len+2;j++){
+        for(int j=0;j<char_set_len+3;j++){
             if(F[i][j]==-1) printf("^ ");
             else printf("%d ",F[i][j]);
         }
     }
+
+    FILE *f;
+    f = fopen("nfa.dot","w+");
+    fprintf(f,"digraph G{\n");
+    for(int i=0;i<state-1;i++){
+        fprintf(f,"%d[label=\"%d\"];\n",i,i);
+    }
+    fprintf(f,"%d[label=\"%d\",shape=\"doublecircle\"];\n",state-1,state-1);
+    for(int i=0;i<state;i++){
+        for(int j=0;j<char_set_len+3;j++){
+            if(F[i][j]!=-1){
+                if(j>=char_set_len) fprintf(f,"%d->%d[label=\"null\"];\n",i,F[i][j]); 
+                else fprintf(f,"%d->%d[label=\"%c\"];\n",i,F[i][j],char_set[j]);
+            }
+        }
+    }
+    fprintf(f,"}");
+    fclose(f);
+    system("dot -Tpng nfa.dot -o nfa.png");
 
        
 }
