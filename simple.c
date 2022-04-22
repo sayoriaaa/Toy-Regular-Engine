@@ -97,59 +97,44 @@ void structDFA(char *s){//用一个邻接矩阵描述
     for(int i=0;i<256;i++){
         for(int j=0;j<256;j++) F[i][j]=-1;
     }
-    int top_state[3]={-1,-1,-1}, buttom_state[3]={-1,-1,-1};
+    int state_stack[256][3],state_stack_len=0;
     for(int i=0;i<strlen(s);i++){
+        printf("%c ",s[i]);
         if(s[i]!='|'&&s[i]!='&'&&s[i]!='*'){
             int cor_pos=getListLoc(char_set,s[i]);
             F[state][cor_pos]=state+1;
-            if(top_state[0]==-1){
-                top_state[0]=state;
-                top_state[1]=state+1;
-            }
-            else{
-                buttom_state[0]=state;
-                buttom_state[1]=state+1;
-            }
+            state_stack[state_stack_len][0]=state;
+            state_stack[state_stack_len][1]=state+1;//push to stack
+            state_stack_len++;//manually maintain stack
             state+=2;
         }
         if(s[i]=='&'){
             //copy_int_line(F[buttom_state[0]],F[top_state[1]]);
-            F[top_state[1]][char_set_len+2]=buttom_state[0];
-            top_state[1]=buttom_state[1];
-            buttom_state[0]=-1;
+            F[state_stack[state_stack_len-2][1]][char_set_len+2]=state_stack[state_stack_len-1][0];//link fronter's tail to follower's tail
+            state_stack[state_stack_len-2][1]=state_stack[state_stack_len-1][1];
+            state_stack_len--;
         }
         if(s[i]=='|'){
             start_state=state;
-            F[state][char_set_len]=top_state[0];
-            F[state][char_set_len+1]=buttom_state[0];
-            top_state[0]=state;
-            state++;
-            F[buttom_state[1]][char_set_len]=state;
-            F[top_state[1]][char_set_len]=state;
-            top_state[1]=state;
-            state++;
-            buttom_state[0]=-1;
+            F[state][char_set_len]=state_stack[state_stack_len-2][0];
+            F[state][char_set_len+1]=state_stack[state_stack_len-1][0];//give arrow to the two opoed ones
+            F[state_stack[state_stack_len-2][1]][char_set_len]=state+1;
+            F[state_stack[state_stack_len-1][1]][char_set_len]=state+1;
+
+            state_stack[state_stack_len-2][0]=state;
+            state_stack[state_stack_len-2][1]=state+1;
+            state+=2;
+            state_stack_len--;
         }
         if(s[i]=='*'){
-            if(buttom_state[0]==-1){
-                start_state=state;
-                F[state][char_set_len]=top_state[0];
-                F[state][char_set_len+1]=state+1;
-                F[top_state[1]][char_set_len]=top_state[0];
-                F[top_state[1]][char_set_len+1]=state+1;
-                top_state[0]=state;
-                top_state[1]=state+1;
-                state+=2;
-            }
-            else{
-                F[state][char_set_len]=buttom_state[0];
-                F[state][char_set_len+1]=state+1;
-                F[buttom_state[1]][char_set_len]=buttom_state[0];
-                F[buttom_state[1]][char_set_len+1]=state+1;
-                buttom_state[0]=state;
-                buttom_state[1]=state+1;
-                state+=2;
-            }
+            start_state=state;
+            F[state][char_set_len]=state_stack[state_stack_len-1][0];
+            F[state][char_set_len+1]=state+1;
+            F[state_stack[state_stack_len-1][1]][char_set_len]=state_stack[state_stack_len-1][0];
+            F[state_stack[state_stack_len-1][1]][char_set_len+1]=state+1;
+            state_stack[state_stack_len-1][0]=state;
+            state_stack[state_stack_len-1][1]=state+1;
+            state+=2;
         }
     }
     printf("start state:%d\n",start_state);
