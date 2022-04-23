@@ -1,26 +1,10 @@
 /*
 Author:sayoriaaa
-if value of a node is '~', then its tail-edge is epsilon
-else is the value of its tail node
 */
 
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
-
-struct DFA{
-    char value;
-    struct DFA **tail;
-};
-
-struct DFA *newDFA(char value){
-    struct DFA *ret=(struct DFA*)malloc(sizeof(struct DFA));
-    ret->value=value;
-    ret->tail=(struct DFA**)malloc(2*sizeof(struct DFA*));
-    ret->tail[0]=NULL;
-    ret->tail[1]=NULL;
-    return ret;
-}
 
 int priority(char c){
     if(c=='*') return 3;
@@ -70,16 +54,6 @@ int getListLoc(char* s, char t){
     }
 }
 
-void copy_int_line(int *a, int *b){
-    for(int i=0;i<256;i++){
-        b[i]=a[i];
-    }
-}
-
-void delete_int_line(int *a){
-    for(int i=0;i<256;i++) a[i]=-1;
-}
-
 void structDFA(char *s){//用一个邻接矩阵描述
     int state=0, char_set_len=0;
     char char_set[256];
@@ -93,13 +67,12 @@ void structDFA(char *s){//用一个邻接矩阵描述
     printf("\nchar set:%s\n",char_set); 
 //***********获得输入字符集合****************//
     int F[256][256];
-    int start_state=0;
+
     for(int i=0;i<256;i++){
         for(int j=0;j<256;j++) F[i][j]=-1;
     }
     int state_stack[256][3],state_stack_len=0;
     for(int i=0;i<strlen(s);i++){
-        printf("%c ",s[i]);
         if(s[i]!='|'&&s[i]!='&'&&s[i]!='*'){
             int cor_pos=getListLoc(char_set,s[i]);
             F[state][cor_pos]=state+1;
@@ -115,7 +88,6 @@ void structDFA(char *s){//用一个邻接矩阵描述
             state_stack_len--;
         }
         if(s[i]=='|'){
-            start_state=state;
             F[state][char_set_len]=state_stack[state_stack_len-2][0];
             F[state][char_set_len+1]=state_stack[state_stack_len-1][0];//give arrow to the two opoed ones
             F[state_stack[state_stack_len-2][1]][char_set_len]=state+1;
@@ -127,7 +99,6 @@ void structDFA(char *s){//用一个邻接矩阵描述
             state_stack_len--;
         }
         if(s[i]=='*'){
-            start_state=state;
             F[state][char_set_len]=state_stack[state_stack_len-1][0];
             F[state][char_set_len+1]=state+1;
             F[state_stack[state_stack_len-1][1]][char_set_len]=state_stack[state_stack_len-1][0];
@@ -137,14 +108,18 @@ void structDFA(char *s){//用一个邻接矩阵描述
             state+=2;
         }
     }
-    printf("start state:%d\n",start_state);
+    
+    int state_visit[256]={0}, start_state=0;//to identify the start node
     for(int i=0;i<state;i++){
-        printf("\n state%d : ",i);
+        printf("\nstate%d : ",i);
         for(int j=0;j<char_set_len+3;j++){
             if(F[i][j]==-1) printf("^ ");
-            else printf("%d ",F[i][j]);
+            else{printf("%d ",F[i][j]);state_visit[F[i][j]]=1;}          
         }
     }
+    for(int i=0;i<state;i++){
+        if(state_visit[i]==0){start_state=i;break;}}
+    printf("\n\nstart state:%d\n",start_state);
 
     FILE *f;
     f = fopen("nfa.dot","w+");
@@ -161,11 +136,10 @@ void structDFA(char *s){//用一个邻接矩阵描述
             }
         }
     }
+    fprintf(f,"start[label=\"start\"];\nstart->%d;\n",start_state);
     fprintf(f,"}");
     fclose(f);
     system("dot -Tpng nfa.dot -o nfa.png");
-
-       
 }
 
 
