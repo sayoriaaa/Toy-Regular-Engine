@@ -261,6 +261,24 @@ void NFA_to_DFA(int** NFA){
         }
     }
 
+    FILE *f;
+    f = fopen("dfa.dot","w+");
+    fprintf(f,"digraph G{\n");
+    for(int i=0;i<DFA_states_len;i++){
+        if(code_set_fun[i][NFA_STATES-1]==1) fprintf(f,"%d[label=\"%d\",shape=\"doublecircle\"];\n",i,i);
+        fprintf(f,"%d[label=\"%d\"];\n",i,i);
+    }
+    for(int i=0;i<DFA_states_len;i++){
+        for(int j=0;j<CHAR_SET_LEN;j++){
+            if(F[i][j]!=-1){
+                fprintf(f,"%d->%d[label=\"%c\"];\n",i,F[i][j],char_set[j]);
+            }
+        }
+    }
+    fprintf(f,"start[label=\"start\"];\nstart->0;\n");
+    fprintf(f,"}");
+    fclose(f);
+    system("dot -Tpng dfa.dot -o dfa.png");
 }
 
 
