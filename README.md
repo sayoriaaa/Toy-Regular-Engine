@@ -20,12 +20,12 @@ $(a|b)^*abb$
 
 ### NFA
 
-![dfa](D:\school_task\compiler\token\extra\reg\pic\nfa.png)
+![](pic/nfa.png)
 
 ### DFA
 
-![dfa](D:\school_task\compiler\token\extra\reg\pic\dfa.png)
+![dfa](pic\dfa.png)
 
 ### min_DFA
 
-![min_dfa](D:\school_task\compiler\token\extra\reg\pic\min_dfa.png)
+![min_dfa](pic\min_dfa.png)
