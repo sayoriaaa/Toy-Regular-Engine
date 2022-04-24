@@ -279,6 +279,55 @@ void NFA_to_DFA(int** NFA){
     fprintf(f,"}");
     fclose(f);
     system("dot -Tpng dfa.dot -o dfa.png");
+
+    //******************minimize DFA************************
+    int minList[DFA_states_len][2];
+    for(int i=0;i<DFA_states_len;i++) minList[i][0]=minList[i][1]=i;
+    for(int i=0;i<DFA_states_len;i++){
+        if(code_set_fun[i][NFA_STATES-1]==1){
+            for(int j=i+1;j<DFA_states_len;j++){
+                if(code_set_fun[j][NFA_STATES-1]==1){
+                    int flg=1;
+                    for(int t=0;t<CHAR_SET_LEN;t++){
+                        if(F[i][t]!=F[j][t]) flg=0;
+                    }
+                    if(flg&&minList[j][0]==minList[j][1]) minList[j][1]=minList[i][0];
+                }
+            }
+
+        }
+        else{
+            for(int j=i+1;j<DFA_states_len;j++){
+                if(code_set_fun[j][NFA_STATES-1]==0){
+                    int flg=1;
+                    for(int t=0;t<CHAR_SET_LEN;t++){
+                        if(F[i][t]!=F[j][t]) flg=0;
+                    }
+                    if(flg&&minList[j][0]==minList[j][1]) minList[j][1]=minList[i][0];
+                }
+            }
+        }
+    }
+
+    FILE *minf;
+    minf = fopen("min_dfa.dot","w+");
+    fprintf(minf,"digraph G{\n");
+    for(int i=0;i<DFA_states_len;i++){
+        if(minList[i][0]!=minList[i][1]) continue;
+        if(code_set_fun[i][NFA_STATES-1]==1) fprintf(minf,"%d[label=\"%d\",shape=\"doublecircle\"];\n",i,i);
+        fprintf(minf,"%d[label=\"%d\"];\n",i,i);
+    }
+    for(int i=0;i<DFA_states_len;i++){
+        for(int j=0;j<CHAR_SET_LEN;j++){
+            if(F[i][j]!=-1&&minList[i][0]==minList[i][1]){
+                fprintf(minf,"%d->%d[label=\"%c\"];\n",i,minList[F[i][j]][1],char_set[j]);
+            }
+        }
+    }
+    fprintf(minf,"start[label=\"start\"];\nstart->0;\n");
+    fprintf(minf,"}");
+    fclose(minf);
+    system("dot -Tpng min_dfa.dot -o min_dfa.png");    
 }
 
 
