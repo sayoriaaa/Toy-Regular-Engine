@@ -59,7 +59,7 @@ int getListLoc(char* s, char t){
     return -1;
 }
 
-int** structDFA(char *s){//用一个邻接矩阵描述
+int** structNFA(char *s){//用一个邻接矩阵描述
     int state=0, char_set_len=0;
     for(int i=0;i<strlen(s);i++){
         if(s[i]!='|'&&s[i]!='&'&&s[i]!='*') char_set[char_set_len++]=s[i];
@@ -195,6 +195,74 @@ int NFA_match(int** F, char *s){//test note for showing the legal state for each
     return 0;
 }
 
+int IsSetSame(int* a, int* b){
+    for(int i=0;i<NFA_STATES;i++){
+        if(a[i]!=b[i]) return 0;
+    }
+    return 1;
+}
+
+int* epsilon_closure_T(int** NFA, int *T, int T_len){
+    int* alreadyOn=(int*)malloc(sizeof(int)*NFA_STATES);
+    memset(alreadyOn, 0, sizeof(int)*(NFA_STATES));
+    int epsilon_extend[MAX_LEN]={0}, epsilon_extend_len=T_len;
+
+    for(int i=0; i<T_len; i++){
+        epsilon_extend[i]=T[i];
+        alreadyOn[T[i]]=1;
+    }//防止对原数组修改,拷贝成epsilon-extend
+
+    for(int i=0;i<T_len;i++){
+        NFA_move(NFA, T[i], epsilon_extend, &epsilon_extend_len, alreadyOn);
+    }
+    return alreadyOn;
+}
+
+
+void NFA_to_DFA(int** NFA){
+    int DFA_states_len=1, S0[1]={NFA_START_STATE};
+    int **F=(int**)malloc(sizeof(int*)*MAX_LEN);
+    for(int i=0;i<MAX_LEN;i++){
+        F[i]=(int*)malloc(sizeof(int)*(CHAR_SET_LEN));
+        memset(F[i], -1, sizeof(int)*(CHAR_SET_LEN));
+    }//initialize the transform function
+
+    int **code_set_fun=(int**)malloc(sizeof(int*)*MAX_LEN);//DFA状态编号到具体NFA状态集合的映射
+    int taged[MAX_LEN]={0};
+
+    code_set_fun[0]=epsilon_closure_T(NFA, S0, 1);
+    for(int i=0; i<DFA_states_len; i++){
+        if(taged[i]==0){
+            taged[i]=1;
+            for(int a=0; a<CHAR_SET_LEN; a++){
+                int U[MAX_LEN]={0}, U_len=0;
+                for(int j=0; j<NFA_STATES; j++){
+                    if(code_set_fun[i][j]==1&&NFA[j][a]!=-1) U[U_len++]=NFA[j][a];
+                }
+                int* wait_to_code=epsilon_closure_T(NFA, U, U_len);//等待将此集合编号
+                int U_code=0;
+                for(; U_code<DFA_states_len; U_code++){
+                    if(IsSetSame(wait_to_code, code_set_fun[U_code])) break;//查看此集合是否已经有记录
+                }
+                if(U_code==DFA_states_len){
+                    DFA_states_len++;
+                    code_set_fun[U_code]=wait_to_code;
+                }
+                F[i][a]=U_code;
+            }
+        }
+    }
+
+    for(int i=0;i<DFA_states_len;i++){
+        printf("\nstate%d : ",i);
+        for(int j=0;j<CHAR_SET_LEN;j++){
+            if(F[i][j]==-1) printf("^ ");
+            else{printf("%d ",F[i][j]);}          
+        }
+    }
+
+}
+
 
 
 int main(int argc, char **argv){
@@ -206,11 +274,13 @@ int main(int argc, char **argv){
     }
     scanf("%s",s);
     printf("%s", to_postfix(s));
-    F=structDFA(to_postfix(s));
+    F=structNFA(to_postfix(s));
+    NFA_to_DFA(F);
+    /*
     while(1){
         scanf("%s",s);
         printf("%d\n",NFA_match(F,s));    
-    }
+    }*/
 }
 
 
